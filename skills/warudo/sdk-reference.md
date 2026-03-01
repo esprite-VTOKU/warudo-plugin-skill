@@ -222,6 +222,29 @@ Playback.Disable();
 
 ---
 
+## CharacterAsset Expression API
+
+Direct expression control without blueprint nodes:
+
+```csharp
+// Enter a VRM expression (bypasses ToggleCharacterExpressionNode)
+Character.EnterExpression("happy", transient: true);  // second param is bool, NOT float
+
+// Exit an expression
+Character.ExitExpression("happy");
+
+// Guard against re-entering the same expression
+if (_currentExpression != newExpression)
+{
+    if (!string.IsNullOrEmpty(_currentExpression))
+        Character.ExitExpression(_currentExpression);
+    Character.EnterExpression(newExpression, transient: true);
+    _currentExpression = newExpression;
+}
+```
+
+---
+
 ## StructuredData
 
 For complex embedded data in Assets or Nodes:
