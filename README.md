@@ -7,7 +7,7 @@ A Claude Code skill that provides full Warudo SDK reference, code templates, blu
 - **Plugin, Asset, and Node templates** — all 6 node patterns (Pure Data, Flow, Hybrid, Flow-Driven Daemon, Event, Signal Receiver)
 - **SDK reference** — attributes, UI widgets, Context APIs, StructuredData, PlaybackMixin, external integration
 - **Graph API** — blueprint generation, built-in node ports, iFacialMocap animation pattern
-- **Gotchas** — lessons learned and common pitfalls from real plugin development
+- **Gotchas** — lessons learned and common pitfalls from plugin development
 
 ## Installation
 
