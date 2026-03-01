@@ -163,6 +163,59 @@ Expression: CustomDaemonNode.OnResponse → ToggleCharacterExpression
 | `SmoothBlendShapeListNode` | `BlendShapes` (inherited), `SmoothTime` | `SmoothedBlendShapes()` | — | — |
 | `SmoothRotationListNode` | `Rotations`, `SmoothTime` | `SmoothedRotations()` | — | — |
 | `ToggleCharacterExpressionNode` | `Character`, `Expression`, `IsTransient`, `Action` | — | `Enter` | `Exit` |
+| `PlayOneShotCharacterAnimationNode` | `Character`, `Animation`, `Masked`, `MaskedBodyParts`, `Speed`, `Weight` | — | `Enter` | `Exit` |
+| `SwitchOnStringNode` | `Cases` (string[]), `Input` (string), `IgnoreCase` (bool) | — | `Enter` | Dynamic exits from `Cases` |
+
+**`SwitchOnStringNode`** (TypeId: `e251cea0-5698-49e2-bc69-55d7488b644a`): Matches `Input` against `Cases` array and fires the corresponding exit port. Dynamic exit ports are created from the `Cases` array via `SetupExitPorts()`. To update cases on an existing graph, find the node via `graph.GetNodes()`, cast to `SwitchOnStringNode`, call `SetDataInput("Cases", newArray, true)`.
+
+---
+
+## Updating Existing Graphs
+
+Find and modify nodes in live graphs:
+
+```csharp
+// Find nodes by type
+var graph = Context.OpenedScene.GetGraph(graphGuid);
+foreach (var kvp in graph.GetNodes())  // returns Dictionary<Guid, Node>
+{
+    if (kvp.Value is SwitchOnStringNode switchNode)
+        switchNode.SetDataInput("Cases", newCases, broadcast: true);
+}
+
+// Auto-update graph nodes when asset config changes
+Watch(nameof(MyConfig), () =>
+{
+    if (!string.IsNullOrEmpty(GeneratedGraphId) &&
+        Guid.TryParse(GeneratedGraphId, out var guid))
+    {
+        var graph = Context.OpenedScene.GetGraph(guid);
+        if (graph == null) return;
+        // Update relevant nodes...
+    }
+});
+```
+
+### Graph Validation on Scene Load
+
+Saved graph IDs can become stale if the user manually deletes the graph. Validate on create:
+
+```csharp
+// In Asset OnCreate — validate blueprint still exists:
+if (!string.IsNullOrEmpty(GeneratedGraphId))
+{
+    if (Guid.TryParse(GeneratedGraphId, out var guid))
+        _blueprintActive = Context.OpenedScene.GetGraph(guid) != null;
+    else
+        _blueprintActive = false;
+
+    if (!_blueprintActive)
+    {
+        GeneratedGraphId = "";
+        BroadcastDataInput(nameof(GeneratedGraphId));
+    }
+}
+```
 
 ### Graph API Gotchas
 

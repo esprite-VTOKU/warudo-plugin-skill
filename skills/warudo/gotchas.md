@@ -64,6 +64,20 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **`WarudoApp` is not accessible** in UMod mods — use `Context.Service` instead
 - **Markdown images**: `file:///` is blocked by Vuplex — use `data:image/jpeg;base64,...` in `<img>` tags
 
+## Scene Persistence
+
+- **`BroadcastOpenedScene()`** only refreshes the UI — it does NOT save to disk
+- **`Context.OpenedScene.Save()`** (returns UniTask) actually persists scene state to disk
+- Use `Context.OpenedScene.Save().Forget()` after programmatic changes (blueprint generation/removal)
+- On scene load, validate that saved graph IDs still point to real graphs — auto-regenerate if the user manually deleted the graph
+
+## PlayOneShotCharacterAnimationNode Masking
+
+- Has BOTH `Masked` (bool) AND `MaskedBodyParts` (`AnimationMaskedBodyPart[]`)
+- **Both must be set** for masking to work — `Masked=true` with empty `MaskedBodyParts` silently does nothing
+- Upper body parts: `Body`, `Head`, `LeftArm`, `RightArm`, `LeftFingers`, `RightFingers`
+- Full enum (`CharacterAsset.AnimationMaskedBodyPart`): `Root`, `Body`, `Head`, `LeftLeg`, `RightLeg`, `LeftArm`, `RightArm`, `LeftFingers`, `RightFingers`, `LeftFoot`, `RightFoot`
+
 ## JSON Parsing
 
 - Unity's `JsonUtility` chokes on `null` values and unknown fields — use manual parsing for external API responses
