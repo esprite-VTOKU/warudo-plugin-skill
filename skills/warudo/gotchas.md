@@ -60,7 +60,7 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **UMod blocks `System.IO`** — use `Context.PersistentDataManager` for all file operations
 - **No third-party DLLs** — cannot use NuGet packages or external DLLs
 - **No `.asmdef` files** in the mod folder — scripts must be in default Assembly-CSharp
-- **No `System.Reflection`** — use `SendMessage()` / `BroadcastMessage()` instead
+- **No `System.Reflection`** — UMod rejects ALL reflection APIs including sneaky ones like `GetType().Name` (compiles to `MemberInfo.get_Name()` → "illegal member reference"). Use virtual string properties or hardcoded strings instead of reflection for type names
 - **`WarudoApp` is not accessible** in UMod mods — use `Context.Service` instead
 - **Markdown images**: `file:///` is blocked by Vuplex — use `data:image/jpeg;base64,...` in `<img>` tags
 
