@@ -102,10 +102,14 @@ public UniTask<AutoCompleteList> GetOptions() => UniTask.FromResult(
         new AutoCompleteEntry { label = "Display Name", value = "stored_value" },
     }));
 
-// Grouped:
+// Grouped (uses constructor — this is the ONE case where constructor works):
 return UniTask.FromResult(new AutoCompleteList { categories = new List<AutoCompleteCategory> {
     new AutoCompleteCategory { title = "Group", entries = new List<AutoCompleteEntry> { ... } }
 }});
+
+// WARNING: AutoCompleteList uses static factory methods, NOT constructor for flat lists.
+// Do NOT use `new AutoCompleteList { entries = ... }` — that field doesn't exist.
+// Use AutoCompleteList.Single(entries) or AutoCompleteList.Message(text) instead.
 
 // Status message:
 return AutoCompleteList.Message("No devices found.");
