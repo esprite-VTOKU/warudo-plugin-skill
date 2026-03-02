@@ -54,7 +54,7 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **`CharacterAsset.EnterExpression(string, bool)`** — second param is `bool`, NOT `float`
 - **`Encoding.Latin1`** does NOT exist in Unity 2021.3 — use `Encoding.ASCII` or `Encoding.GetEncoding("iso-8859-1")`
 - **Node/asset IDs that collide** silently fail — always generate fresh GUIDs
-- **Field ordering with inheritance** — `[DataInput]`, `[Trigger]`, and `[Section]` default to `[CallerLineNumber]` for ordering. This works in a single file, but when splitting across base class + subclass files, overlapping line numbers scramble the UI. **Always use explicit `order:` values** when using inheritance: e.g., `[DataInput(order: 101)]`, `[Section("Name", order: 200)]`. Use order ranges per section (100-109, 200-209, etc.) so base and subclass fields interleave deterministically
+- **NEVER use inheritance for Asset UI fields** — Warudo processes base class fields and subclass fields in separate passes. Base class fields ALWAYS render AFTER subclass fields, regardless of `order:` values. Explicit `order:` only works within the same class level. Section assignment is by source position (whichever `[Section]` is above it in source code), not by `order:`. **Keep all `[DataInput]`/`[Trigger]`/`[Section]` in a single class file** — `[CallerLineNumber]` default ordering works perfectly when everything is in one file. Use composition (helper classes) for code reuse, not inheritance
 
 ## UMod / Build Restrictions
 
