@@ -54,6 +54,7 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **`CharacterAsset.EnterExpression(string, bool)`** — second param is `bool`, NOT `float`
 - **`Encoding.Latin1`** does NOT exist in Unity 2021.3 — use `Encoding.ASCII` or `Encoding.GetEncoding("iso-8859-1")`
 - **Node/asset IDs that collide** silently fail — always generate fresh GUIDs
+- **Field ordering with inheritance** — `[DataInput]`, `[Trigger]`, and `[Section]` default to `[CallerLineNumber]` for ordering. This works in a single file, but when splitting across base class + subclass files, overlapping line numbers scramble the UI. **Always use explicit `order:` values** when using inheritance: e.g., `[DataInput(order: 101)]`, `[Section("Name", order: 200)]`. Use order ranges per section (100-109, 200-209, etc.) so base and subclass fields interleave deterministically
 
 ## UMod / Build Restrictions
 
