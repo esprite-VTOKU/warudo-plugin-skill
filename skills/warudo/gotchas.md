@@ -68,7 +68,7 @@ Hard-won patterns from production plugin development. Read this before writing a
 
 - **`BroadcastOpenedScene()`** only refreshes the UI — it does NOT save to disk
 - **`Context.OpenedScene.Save()`** (returns UniTask) actually persists scene state to disk
-- Use `Context.OpenedScene.Save().Forget()` after programmatic changes (blueprint generation/removal)
+- **Do NOT auto-save** after blueprint gen/remove — saving is the user's responsibility. Only call `Save()` if the user explicitly triggers a save action
 - On scene load, validate that saved graph IDs still point to real graphs — auto-regenerate if the user manually deleted the graph
 
 ## PlayOneShotCharacterAnimationNode Masking
