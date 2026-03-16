@@ -8,6 +8,8 @@ A Claude Code skill that provides full Warudo SDK reference, code templates, blu
 - **SDK reference** — attributes, UI widgets, Context APIs, StructuredData, PlaybackMixin, external integration
 - **Graph API** — C# blueprint generation from plugin code, built-in node ports, iFacialMocap animation pattern
 - **Blueprint JSON generation** *(experimental)* — generate raw `.json` blueprints to import directly into Warudo, with node lookup from the live node catalog, addon plugin detection, and layout conventions. Test generated blueprints in Warudo before relying on them.
+- **Web dashboard integration** — 3-tier architecture for building browser-based UIs that control Warudo
+- **Node catalog** — bundled catalog of 969 unique Warudo nodes for blueprint generation and node lookup
 - **Gotchas** — lessons learned and common pitfalls from plugin development
 
 ## Installation
@@ -52,9 +54,11 @@ Or just start asking Warudo plugin development questions — the skill auto-trig
 | `sdk-reference.md` | ~380 | Attributes, UI, Context APIs, StructuredData |
 | `graph-api.md` | ~150 | C# Graph API, blueprint generation from plugin code, animation patterns |
 | `blueprint-json.md` | ~150 | *(experimental)* Raw blueprint JSON schema, node catalog lookup, plugin detection |
+| `web-dashboard.md` | ~650 | Web dashboard integration, 3-tier architecture |
+| `node-catalog.json` | ~45k | Bundled catalog of 969 unique Warudo nodes |
 | `gotchas.md` | ~130 | Common pitfalls and lessons learned |
 
-Only `SKILL.md` loads by default. Supporting files are loaded on-demand when needed.
+Only `SKILL.md` loads by default. Supporting files are loaded on-demand when needed. `node-catalog.json` is referenced during blueprint generation for node lookup.
 
 ## Requirements
 
