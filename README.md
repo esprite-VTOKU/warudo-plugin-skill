@@ -7,7 +7,7 @@ A Claude Code skill that provides full Warudo SDK reference, code templates, blu
 - **Plugin, Asset, and Node templates** — all 6 node patterns (Pure Data, Flow, Hybrid, Flow-Driven Daemon, Event, Signal Receiver)
 - **SDK reference** — attributes, UI widgets, Context APIs, StructuredData, PlaybackMixin, external integration
 - **Graph API** — C# blueprint generation from plugin code, built-in node ports, iFacialMocap animation pattern
-- **Blueprint JSON generation** *(experimental)* — generate raw `.json` blueprints to import directly into Warudo, with node lookup from the live node catalog, addon plugin detection, and layout conventions. Always verify port keys and `typeId` values before importing.
+- **Blueprint JSON generation** *(experimental)* — generate raw `.json` blueprints to import directly into Warudo, with node lookup from the live node catalog, addon plugin detection, and layout conventions. Test generated blueprints in Warudo before relying on them.
 - **Gotchas** — lessons learned and common pitfalls from plugin development
 
 ## Installation
