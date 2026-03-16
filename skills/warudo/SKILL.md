@@ -2,14 +2,17 @@
 name: warudo
 description: Create a Warudo plugin with Plugin class, Assets, and Nodes. Includes full SDK reference, blueprint generation, and all node patterns. Use when creating any Warudo plugin, asset, or node. Also use when writing Warudo C# code, modifying assets, creating blueprint graphs, or working with Warudo's scripting API.
 argument-hint: "PluginName Description"
-user-invokable: true
+user-invocable: true
 ---
 
 # Warudo Plugin Development
 
 **User request**: $ARGUMENTS
 
-**Behavior**: If the user is creating a new plugin, follow the full workflow (Steps 1-9). If the user is modifying existing code, adding a single node/asset, or asking a Warudo API question, skip to the relevant step and use the reference files directly. Do NOT ask 12 requirements questions for a simple edit.
+**Behavior**:
+- **Blueprint JSON** (user wants a `.json` file to import into Warudo, or wants to wire nodes visually): skip to the **Blueprint JSON Workflow** section below and see [blueprint-json.md](blueprint-json.md).
+- **New plugin** (C# code): follow the full workflow (Steps 1-9).
+- **Modifying existing code, adding a node/asset, or API question**: skip to the relevant step. Do NOT ask 12 requirements questions for a simple edit.
 
 ---
 
@@ -221,7 +224,8 @@ Place scripts in `Warudo_Data/StreamingAssets/Playground/`. No namespace needed;
 | `CharacterAsset` | `using Warudo.Plugins.Core.Assets.Character;` |
 | `CameraAsset` | `using Warudo.Plugins.Core.Assets.Cinematography;` |
 | `ToolbarItemMixin`, `PlaybackMixin` | `using Warudo.Plugins.Core.Mixins;` |
-| `Asset`, `GameObjectAsset` | `using Warudo.Plugins.Core.Assets;` |
+| `Asset` (base class) | `using Warudo.Core.Scenes;` |
+| `GameObjectAsset` | `using Warudo.Plugins.Core.Assets;` |
 | `Node`, `Graph`, `Continuation` | `using Warudo.Core.Graphs;` |
 | `PluginType`, `AssetType`, `NodeType` etc. | `using Warudo.Core.Attributes;` |
 | `Plugin`, `FeatureStatusData`, `FeatureStatus` | `using Warudo.Core.Plugins;` |
@@ -301,9 +305,33 @@ Nodes should NOT auto-run via `OnUpdate`. Instead, expose `Enter` FlowInput + `E
 
 ---
 
+---
+
+## Blueprint JSON Workflow
+
+> **Experimental**: Blueprint JSON generation is not fully validated. Always verify `typeId` values and port keys against the node catalog before importing, and test in Warudo before relying on generated blueprints.
+
+Use this when the user wants raw blueprint JSON (to import into Warudo) rather than C# plugin code.
+
+Full schema, node lookup, layout rules, and an example are in [blueprint-json.md](blueprint-json.md).
+
+**Steps:**
+1. Identify the nodes needed for the blueprint
+2. Read `c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\StreamingAssets\Playground\node-catalog.json` and search for each node by `title` or `className` to get its `id` and exact port keys
+3. Check each node's `namespace`: if it is non-empty and does not start with `"Warudo.Plugins.Core"`, it is an **addon plugin** — warn the user it must be installed
+4. Assign a fresh UUID to each node instance
+5. Layout nodes left-to-right (x=-1200 → x=0, y=0 for primary chain, ±300 for branches)
+6. Write the graph JSON with `dataConnections` and `flowConnections`
+
+**Addon plugin warning format:**
+> "This blueprint requires the **[Plugin Name]** plugin (`[namespace]`) to be installed in Warudo."
+
+---
+
 ## Supporting Reference Files
 
 - [templates.md](templates.md) — All code templates (Plugin, Asset, 6 node types, brand assets)
 - [sdk-reference.md](sdk-reference.md) — Attributes, UI widgets, Context APIs, StructuredData, external integration
-- [graph-api.md](graph-api.md) — Blueprint generation, Graph API, built-in node ports, iFacialMocap pattern
+- [graph-api.md](graph-api.md) — C# Graph API (generating blueprints from plugin code), built-in node ports, iFacialMocap pattern
+- [blueprint-json.md](blueprint-json.md) — Raw blueprint JSON schema, node catalog lookup, plugin detection, layout conventions
 - [gotchas.md](gotchas.md) — Lessons learned, common pitfalls, anti-patterns
