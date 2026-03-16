@@ -20,6 +20,16 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **`async void` methods** (required for Warudo Triggers) MUST wrap body in `try/catch` — unhandled exceptions in `async void` crash the application silently
 - **TOCTOU race in fire-and-forget**: Set guard flags (`_isProcessing = true`) **synchronously** in the calling method (e.g. OnUpdate), NOT inside the async method called via `.Forget()` — another frame may run first
 - Always use `try/finally` for `_isProcessing` flags to prevent stuck states on exception
+- **Generation counter for stale callbacks**: When a trigger can fire multiple times (e.g. TTS button, transcription), stale async completions can overwrite the current result. Fix: increment `int _generation` on each trigger, capture it locally, check `if (_generation != captured) return;` before applying results:
+  ```csharp
+  private int _generation;
+  [Trigger] public async void Speak() {
+      int gen = ++_generation;
+      var clip = await FetchAudio();
+      if (_generation != gen) return; // superseded
+      PlayClip(clip);
+  }
+  ```
 
 ## Animation & Bone Rotation
 
@@ -34,6 +44,12 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **Unity AudioClip is a native object** — must call `Object.Destroy(clip)` after playback or before reassignment
 - **Texture2D, RenderTexture same** — always use `try/finally` to ensure cleanup on exception paths
 - **`Microphone.Start()` returns an AudioClip** that persists until `Microphone.End()`
+- **AudioSource parenting for scene reload resilience**: Create AudioSource under the AudioListener if one exists; otherwise use `DontDestroyOnLoad`. Prevents audio cutting out on scene transitions:
+  ```csharp
+  var listener = Object.FindObjectOfType<AudioListener>();
+  var parent = listener != null ? listener.gameObject : /* DontDestroyOnLoad obj */;
+  _audioSource = parent.AddComponent<AudioSource>();
+  ```
 
 ## Per-Frame Performance
 
@@ -48,6 +64,8 @@ Hard-won patterns from production plugin development. Read this before writing a
 - **`[DataOutput]`** must be a **method**, not a property or field
 - **`[FlowOutput]`** must be a public **field** of type `Continuation`, not a method
 - **`[Markdown]` fields** do NOT use `[DataInput]` — they are standalone
+- **Use arrays, not lists, for array DataInputs** — `Quaternion[]` and `Vector3[]` work correctly as `[DataInput]` connection ports; `List<T>` also works but shows an editable list editor
+- **`[Hidden]` on a `[DataInput]`** removes the port entirely (not just the inline editor)
 - **`[DataOutput]` NOT shown in panel** — use disabled DataInput + `BroadcastDataInput()` for live display
 - **`AutoCompleteEntry`** uses `label`/`value` (NOT `name`)
 - **`EventBus.Unsubscribe`** requires explicit type arg: `Unsubscribe<MyEvent>(id)`
@@ -79,6 +97,10 @@ Hard-won patterns from production plugin development. Read this before writing a
 - Upper body parts: `Body`, `Head`, `LeftArm`, `RightArm`, `LeftFingers`, `RightFingers`
 - Full enum (`CharacterAsset.AnimationMaskedBodyPart`): `Root`, `Body`, `Head`, `LeftLeg`, `RightLeg`, `LeftArm`, `RightArm`, `LeftFingers`, `RightFingers`, `LeftFoot`, `RightFoot`
 
+## Graph & Blueprint Patterns
+
+- **SwitchOnStringNode: modify cases, don't rebuild** — When the list of cases changes at runtime (e.g. user edits a list of actions), update the existing Switch node's cases in-place rather than destroying and recreating the whole graph. Rebuilding destroys all user-made connections to that node.
+
 ## JSON Parsing
 
 - Unity's `JsonUtility` chokes on `null` values and unknown fields — use manual parsing for external API responses
@@ -88,3 +110,36 @@ Hard-won patterns from production plugin development. Read this before writing a
 
 - **Never use `new`** — always `StructuredData.Create<T>()`
 - Parent access via generic: `StructuredData<MyAsset>` → `Parent.DoSomething()`
+
+## Unity vs Warudo Namespace Conflicts
+
+`Scene` and `SceneManager` both exist in `UnityEngine.SceneManagement` AND `Warudo.Core.Scenes`. Always alias them:
+```csharp
+using UnityScene = UnityEngine.SceneManagement.Scene;
+using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
+```
+Use `UnityScene` / `UnitySceneManager` throughout instead of bare names.
+
+## Attributes on Asset/Plugin Types
+
+- **`[AssetType]` has no `Description` parameter** — only `Id`, `Title`, `Category`. Same for `[NodeType]` and `[PluginType]` (PluginType has `Description` but AssetType/NodeType do not)
+- **`[Description("...")]` field attribute does not exist** in Warudo — use `[Label]` for field labels only
+- **`OnCreate()` is `protected`** in the base class — override as `protected override void OnCreate()`
+- **`OnUpdate()` is `public`** in the base `BehavioralEntity` — override as `public override void OnUpdate()`
+
+## AutoCompleteList
+
+- **`[AutoComplete]` methods must return `UniTask<AutoCompleteList>`**, NOT `AutoCompleteList` — use `UniTask.FromResult(...)` to wrap. Requires `using Cysharp.Threading.Tasks;`
+- **`AutoCompleteList.Single()` takes `IEnumerable<AutoCompleteEntry>`**, NOT a bare `AutoCompleteEntry`
+- For a single fallback entry, wrap it: `AutoCompleteList.Single(new[] { new AutoCompleteEntry { label = "...", value = "" } })`
+
+## UniTask WhenAny with Mixed Types
+
+- **`UniTask.WhenAny(UniTask, UniTask<T>)`** (void + typed) returns `int` (winner index), NOT a destructurable tuple
+- Tuple destructure `var (isTimeout, _, response) = await UniTask.WhenAny(...)` **only works when both tasks have the same type**
+- Fix: capture the result via `ContinueWith` to convert to `UniTask` (void), then read the captured value after WhenAny:
+  ```csharp
+  string response = null;
+  var captureTask = responseTask.ContinueWith(r => response = r);
+  int winner = await UniTask.WhenAny(timeoutTask, captureTask);
+  ```
