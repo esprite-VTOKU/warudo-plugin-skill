@@ -6,7 +6,7 @@ This file covers generating **raw blueprint JSON** — the graph files Warudo im
 
 ## Node Catalog
 
-**Path**: `c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\StreamingAssets\Playground\node-catalog.json`
+**Path**: `node-catalog.json` (bundled alongside this file in the skill folder)
 
 Total: ~1,011 entries (969 unique). Each entry:
 ```json
