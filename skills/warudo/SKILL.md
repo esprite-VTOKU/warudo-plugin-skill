@@ -1,6 +1,6 @@
 ---
 name: warudo
-description: Create a Warudo plugin with Plugin class, Assets, and Nodes. Includes full SDK reference, blueprint generation, and all node patterns. Use when creating any Warudo plugin, asset, or node. Also use when writing Warudo C# code, modifying assets, creating blueprint graphs, or working with Warudo's scripting API.
+description: Create a Warudo plugin with Plugin class, Assets, and Nodes. Includes full SDK reference, blueprint generation, all node patterns, and web dashboard integration (WebSocket, HTTP server, ScreenAsset). Use when creating any Warudo plugin, asset, node, or web dashboard. Also use when writing Warudo C# code, modifying assets, creating blueprint graphs, building web control panels, or working with Warudo's scripting API.
 argument-hint: "PluginName Description"
 user-invocable: true
 ---
@@ -11,6 +11,7 @@ user-invocable: true
 
 **Behavior**:
 - **Blueprint JSON** (user wants a `.json` file to import into Warudo, or wants to wire nodes visually): skip to the **Blueprint JSON Workflow** section below and see [blueprint-json.md](blueprint-json.md).
+- **Web dashboard / HTTP server / WebSocket control / ScreenAsset browser integration**: see [web-dashboard.md](web-dashboard.md) for the 3-tier architecture, asset template, and HTML template.
 - **New plugin** (C# code): follow the full workflow (Steps 1-9).
 - **Modifying existing code, adding a node/asset, or API question**: skip to the relevant step. Do NOT ask 12 requirements questions for a simple edit.
 
@@ -334,4 +335,5 @@ Full schema, node lookup, layout rules, and an example are in [blueprint-json.md
 - [sdk-reference.md](sdk-reference.md) — Attributes, UI widgets, Context APIs, StructuredData, external integration
 - [graph-api.md](graph-api.md) — C# Graph API (generating blueprints from plugin code), built-in node ports, iFacialMocap pattern
 - [blueprint-json.md](blueprint-json.md) — Raw blueprint JSON schema, node catalog lookup, plugin detection, layout conventions
+- [web-dashboard.md](web-dashboard.md) — Web dashboard integration: 3-tier architecture (WS protocol, HTTP server, ScreenAsset), dashboard asset template, HTML template, ServiceMessageQueue
 - [gotchas.md](gotchas.md) — Lessons learned, common pitfalls, anti-patterns
