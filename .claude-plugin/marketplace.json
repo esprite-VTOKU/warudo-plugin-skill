@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "warudo-plugin-skill",
+  "version": "1.0.0",
+  "description": "Warudo plugin development skill for Claude Code — SDK reference, templates, blueprint generation, and no-Unity packaging.",
+  "owner": {
+    "name": "esprite-VTOKU",
+    "url": "https://github.com/esprite-VTOKU"
+  },
+  "plugins": [
+    {
+      "name": "warudo-plugin-skill",
+      "description": "Warudo SDK reference, code templates, blueprint generation, and build-without-Unity packaging for developing Warudo plugins.",
+      "version": "1.0.0",
+      "source": "./",
+      "category": "development",
+      "keywords": ["warudo", "vtuber", "unity", "plugin", "modding", "sdk"]
+    }
+  ]
+}
