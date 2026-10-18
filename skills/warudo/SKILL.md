@@ -1,6 +1,6 @@
 ---
 name: warudo
-description: Create a Warudo plugin with Plugin class, Assets, and Nodes. Includes full SDK reference, blueprint generation, and all node patterns. Use when creating any Warudo plugin, asset, or node. Also use when writing Warudo C# code, modifying assets, creating blueprint graphs, or working with Warudo's scripting API.
+description: Create a Warudo plugin with Plugin class, Assets, and Nodes. Includes full SDK reference, blueprint generation, all node patterns, and web dashboard integration (WebSocket, HTTP server, ScreenAsset). Use when creating any Warudo plugin, asset, node, or web dashboard. Also use when writing Warudo C# code, modifying assets, creating blueprint graphs, building web control panels, or working with Warudo's scripting API.
 argument-hint: "PluginName Description"
 user-invocable: true
 ---
@@ -11,6 +11,9 @@ user-invocable: true
 
 **Behavior**:
 - **Blueprint JSON** (user wants a `.json` file to import into Warudo, or wants to wire nodes visually): skip to the **Blueprint JSON Workflow** section below and see [blueprint-json.md](blueprint-json.md).
+- **Web dashboard / HTTP server / WebSocket control / ScreenAsset browser integration**: see [web-dashboard.md](web-dashboard.md) for the 3-tier architecture, asset template, and HTML template.
+- **Build without Unity** (code-only plugin, no prefabs/textures/meshes): see [mod-packaging.md](mod-packaging.md). Use `dotnet build` + `pack.py` to produce a `.warudo` bundle directly.
+- **Anything touching a socket, port, OAuth callback, mod-to-mod call, or a mod that broke after a Warudo update**: read [warudo-0.15.md](warudo-0.15.md) first. 0.15.x added an auth token in front of ports 19052/19053, a `warudo://` callback API, and compile/load-time security checks inside `async` bodies.
 - **New plugin** (C# code): follow the full workflow (Steps 1-9).
 - **Modifying existing code, adding a node/asset, or API question**: skip to the relevant step. Do NOT ask 12 requirements questions for a simple edit.
 
@@ -168,7 +171,8 @@ Full reference in [sdk-reference.md](sdk-reference.md). Key APIs:
 - **`Context.PersistentDataManager`** — File I/O (no System.IO!)
 - **`Context.OpenedScene`** — Asset/Graph CRUD
 - **`Context.PluginManager`** — Get plugin instances
-- **`Context.PluginRouter`** — Mod-to-mod signals and commands
+- **`Context.PluginRouter`** — Mod-to-mod signals and commands (see [warudo-0.15.md](warudo-0.15.md))
+- **`Context.ExternalCallbackManager`** — 0.15.x: managed OAuth/HTTP callbacks (`warudo://`) and WebSocket channels, without opening your own socket
 
 ---
 
@@ -187,8 +191,14 @@ Port key rules:
 
 1. **Warudo > Export Mod** in Unity
 2. Confirm "BUILD SUCCEEDED!"
-3. Copy `.warudo` to `Warudo_Data/StreamingAssets/Plugins/`
+3. Copy `.warudo` to `Warudo_Data/StreamingAssets/Plugins/` (0.15.x: double-clicking the file also installs it)
 4. Launch Warudo
+
+**Keep the Mod Tool SDK current.** `Packages/manifest.json` should reference
+`https://github.com/HakuyaLabs/Warudo-Mod-Tool.git#upm/latest` (or `#upm/<version>` to pin);
+the older `#0.14.3.5` style ref builds against uMod 2.9.0 and misses the 0.14.4+ security-check
+fixes. A mod built with SDK 0.14.5.1+ requires Warudo 0.14.5+. The **Unity version must match the
+host exactly** — 2021.3.45f2 as of 0.15.2. See [warudo-0.15.md](warudo-0.15.md).
 
 ### Verify UMod .csproj (First Build Only)
 
@@ -237,12 +247,28 @@ Place scripts in `Warudo_Data/StreamingAssets/Playground/`. No namespace needed;
 
 ## Plugin Mod Restrictions
 
+Full current blocklist in [warudo-0.15.md](warudo-0.15.md) § *Updated restriction list*.
+
 1. **No third-party DLLs** — cannot use NuGet packages or external DLLs
 2. **No `.asmdef` files** — scripts must be in the default Assembly-CSharp
 3. **No `System.Reflection`** — use `SendMessage()` / `BroadcastMessage()` instead
 4. **No `System.IO`** — use `Context.PersistentDataManager` for file access
-5. **`Context` requires `using Warudo.Core;`**
-6. **`WarudoApp` is not accessible** in UMod mods — use `Context.Service` instead
+5. **No P/Invoke** — disabled globally as of 0.15.x; no native interop from a mod
+6. **No `System.Runtime.InteropServices`, `System.Diagnostics.Process`, `System.AppDomain`**
+7. **`Context` requires `using Warudo.Core;`**
+8. **`WarudoApp` is not accessible** in UMod mods — use `Context.Service` instead
+
+**Networking is allowed** — `System.Net.Sockets`, `HttpListener`, `UnityWebRequest` and
+`websocket-sharp` are not blocked. Filesystem and reflection are.
+
+**0.15.x: the security checks now reach inside `async Task` / `async UniTask` bodies.** A blocked
+call there used to slip through; now it fails at compile time (new SDK) or is intercepted at load
+time (old SDK), which makes the Asset or Node vanish silently. "My asset disappeared after a
+Warudo update" is almost always this.
+
+`Application.OpenURL` is no longer blocked, but is limited to `http`/`https`/`mailto`/`file`,
+fully-qualified URLs only, and `file` cannot reach the `Binaries`, `Clients`, `Playground` or
+`Plugins` directories.
 
 ---
 
@@ -334,4 +360,7 @@ Full schema, node lookup, layout rules, and an example are in [blueprint-json.md
 - [sdk-reference.md](sdk-reference.md) — Attributes, UI widgets, Context APIs, StructuredData, external integration
 - [graph-api.md](graph-api.md) — C# Graph API (generating blueprints from plugin code), built-in node ports, iFacialMocap pattern
 - [blueprint-json.md](blueprint-json.md) — Raw blueprint JSON schema, node catalog lookup, plugin detection, layout conventions
+- [web-dashboard.md](web-dashboard.md) — Web dashboard integration: 3-tier architecture (WS protocol, HTTP server, ScreenAsset), dashboard asset template, HTML template, ServiceMessageQueue
+- [warudo-0.15.md](warudo-0.15.md) — Warudo 0.15.x: version/uMod compatibility, the API auth token, ports 19052/19053/19190, Warudo Link (`warudo://`) + `ExternalCallbackManager`, mod interoperability, updated restriction list, launch flags
+- [mod-packaging.md](mod-packaging.md) — Build and pack a code-only `.warudo` with `dotnet` + `pack.py`, no Unity
 - [gotchas.md](gotchas.md) — Lessons learned, common pitfalls, anti-patterns

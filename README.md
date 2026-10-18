@@ -8,6 +8,9 @@ A Claude Code skill that provides full Warudo SDK reference, code templates, blu
 - **SDK reference** — attributes, UI widgets, Context APIs, StructuredData, PlaybackMixin, external integration
 - **Graph API** — C# blueprint generation from plugin code, built-in node ports, iFacialMocap animation pattern
 - **Blueprint JSON generation** *(experimental)* — generate raw `.json` blueprints to import directly into Warudo, with node lookup from the live node catalog, addon plugin detection, and layout conventions. Test generated blueprints in Warudo before relying on them.
+- **Warudo 0.15.x notes** — uMod/SDK compatibility, the new per-launch API auth token, the 19052 / 19053 / 19190 port map, Warudo Link (`warudo://`) managed callbacks, mod-to-mod interoperability, and the current restriction list
+- **No-Unity mod packaging** — build a code-only plugin with `dotnet` and pack it straight into a `.warudo` bundle (`mod-packager/pack.py`), no Unity Editor needed
+- **Web dashboard integration** — WebSocket control protocol, plugin-hosted HTTP server, embedded ScreenAsset
 - **Gotchas** — lessons learned and common pitfalls from plugin development
 
 ## Installation
@@ -27,6 +30,10 @@ your-warudo-project/
         graph-api.md
         gotchas.md
         blueprint-json.md
+        warudo-0.15.md
+        web-dashboard.md
+        mod-packaging.md
+        mod-packager/
 ```
 
 ### As a personal skill
@@ -52,6 +59,10 @@ Or just start asking Warudo plugin development questions — the skill auto-trig
 | `sdk-reference.md` | ~380 | Attributes, UI, Context APIs, StructuredData |
 | `graph-api.md` | ~150 | C# Graph API, blueprint generation from plugin code, animation patterns |
 | `blueprint-json.md` | ~150 | *(experimental)* Raw blueprint JSON schema, node catalog lookup, plugin detection |
+| `warudo-0.15.md` | ~280 | Warudo 0.15.x: version/uMod compatibility, API auth token, port map, Warudo Link, mod interoperability, restriction list, launch flags |
+| `web-dashboard.md` | ~660 | WebSocket protocol, plugin-hosted HTTP server, ScreenAsset, dashboard templates |
+| `mod-packaging.md` | ~110 | `.warudo` bundle format; build + pack a code-only mod without Unity |
+| `mod-packager/` | — | `pack.py` packager, `template.csproj`, working HelloWorld plugin |
 | `gotchas.md` | ~130 | Common pitfalls and lessons learned |
 
 Only `SKILL.md` loads by default. Supporting files are loaded on-demand when needed.
@@ -59,7 +70,12 @@ Only `SKILL.md` loads by default. Supporting files are loaded on-demand when nee
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) CLI
-- A Unity project with the [Warudo Mod Tool SDK](https://github.com/HakuyaLabs/WarudoPlaygroundExamples)
+- A Unity project with the [Warudo Mod Tool SDK](https://github.com/HakuyaLabs/Warudo-Mod-Tool) —
+  reference it as `https://github.com/HakuyaLabs/Warudo-Mod-Tool.git#upm/latest` in
+  `Packages/manifest.json` (`#upm/<version>` to pin)
+- …or, for a code-only plugin, just the .NET SDK and Python 3 — see `mod-packaging.md`
+
+Written against **Warudo 0.15.2** (Unity 2021.3.45f2, uMod 2.9.9).
 
 ## License
 

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>HelloWorld</AssemblyName>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Warudo SDK -->
+    <Reference Include="Warudo.Core">
+      <HintPath>c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\Warudo.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Warudo.Plugins.Core">
+      <HintPath>c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\Warudo.Plugins.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Unity Engine -->
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- UMod -->
+    <Reference Include="UMod">
+      <HintPath>c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\UMod.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
