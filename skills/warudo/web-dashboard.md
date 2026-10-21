@@ -2,6 +2,11 @@
 
 How to build web dashboard interfaces that control Warudo from a browser or embedded ScreenAsset. Three tiers of integration, from zero-code to full plugin-hosted dashboards.
 
+> **Warudo 0.15.x: ports 19052 and 19053 now require a per-launch auth token, and a mod cannot
+> read it.** Everything below still works, but Tier 1 needs the token passed explicitly and a
+> plugin-hosted dashboard can no longer silently drive 19053. Read
+> [warudo-0.15.md](warudo-0.15.md) § *API security* before building against either port.
+
 ---
 
 ## Architecture Overview
@@ -12,7 +17,13 @@ How to build web dashboard interfaces that control Warudo from a browser or embe
 │  ┌────────────────────┐   ┌────────────────────────────────────┐ │
 │  │  WS Server :19053  │   │  REST API :19052                   │ │
 │  │  (IClient protocol)│   │  GET /api/about, /api/scenes, etc. │ │
+│  │  auth: subprotocol │   │  auth: X-Token header              │ │
 │  └─────────┬──────────┘   └────────────────────────────────────┘ │
+│                                                                    │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │  Raw / channel WS :19190  — 0.0.0.0, NO AUTH                  │ │
+│  │  "Channel" header → mod channel; none → WebSocketRawMessage   │ │
+│  └───────────────────────────────────────────────────────────────┘ │
 │            │                                                      │
 │  ┌─────────┴──────────┐   ┌────────────────────────────────────┐ │
 │  │  EventBus           │   │  ServiceMessageQueue               │ │
@@ -44,6 +55,12 @@ How to build web dashboard interfaces that control Warudo from a browser or embe
 ## Tier 1 — WebSocket Protocol (No Plugin Code Needed)
 
 Any web page can connect to `ws://localhost:19053` and send/receive JSON to control Warudo directly.
+
+**Since 0.15.x this connection is authenticated.** Unless Warudo was launched with
+`--disable-api-security`, the handshake must carry the launch's one-time token as a
+**WebSocket subprotocol** or it is rejected. The token is a 32-char uppercase hex GUID, printed to
+`Player.log` as `One Time API Auth Token: <TOKEN>`, and is different on every launch. A mod asking
+`Context.GetApiAuthToken()` for it gets `""` — see [warudo-0.15.md](warudo-0.15.md).
 
 ### Message Envelope
 
@@ -84,7 +101,9 @@ Supported types: `bool`, `int`, `float`, `string`, `Vector3`, `Quaternion`, and 
 ### Minimal Browser Client
 
 ```javascript
-const ws = new WebSocket('ws://localhost:19053');
+// TOKEN from Player.log ("One Time API Auth Token: ..."), or omit the second argument
+// entirely if Warudo runs with --disable-api-security.
+const ws = new WebSocket('ws://localhost:19053', [TOKEN]);
 
 ws.onopen = () => {
     // Set a DataInput
@@ -132,6 +151,11 @@ Or use the `On WebSocket Raw Message` blueprint node (no code needed).
 ## Tier 2 — Plugin-Hosted HTTP Server (Serve Dashboard Files)
 
 Bundle a web dashboard with your plugin by hosting a `System.Net.HttpListener` inside an Asset. The served page connects to Warudo's WS on port 19053 for live control.
+
+On 0.15.x, prefer driving your **own** Asset from your own server — your page can POST to your
+`HttpListener`, and the Asset changes state directly. Reach for 19053 only for things your plugin
+cannot do itself (setting ports on *other* assets, enabling graphs), and expose a "Warudo API
+token" `[DataInput]` the user fills in from `Player.log` so the page can authenticate.
 
 ### Dashboard Asset Template
 
@@ -327,7 +351,7 @@ public class WebDashboardAsset : Asset
 
 - **`UniTask.RunOnThreadPool`** for `_listener.GetContext()` — prevents blocking Unity's main thread
 - **`async UniTaskVoid`** + `.Forget()` — fire-and-forget pattern for the serve loop
-- **CORS headers** — required so the dashboard page can also open `ws://localhost:19053`
+- **CORS headers** — required so the dashboard page can also call `http://localhost:19052` (CORS does not apply to the WebSocket handshake, but the REST API does need it)
 - **`CancellationTokenSource`** — clean shutdown via `_cts.Cancel()` in `StopHttpServer`
 - **`Watch(nameof(Port), ...)`** — restart server when user changes the port
 - **`System.IO` is allowed** for Playground scripts; for UMod plugins use `Context.PersistentDataManager` or bundle files in the mod
@@ -634,7 +658,8 @@ connect();
 The most common production pattern combines Tier 1 + Tier 2:
 
 1. **Tier 2 Asset** hosts an `HttpListener` to serve your dashboard HTML/JS/CSS
-2. **Dashboard HTML** connects to `ws://localhost:19053` (Tier 1) for all Warudo control
+2. **Dashboard HTML** connects to `ws://localhost:19053` (Tier 1) for all Warudo control — on
+   0.15.x, pass the auth token as a subprotocol: `new WebSocket(url, [TOKEN])`
 3. Optionally, the asset also subscribes to `WebSocketRawMessageEvent` for logging/status
 4. Optionally, use `ServiceMessageQueue.QueueMessage()` to push plugin-specific data to the dashboard
 
@@ -646,7 +671,11 @@ For in-Warudo display, add a **ScreenAsset** pointed at `http://localhost:<port>
 
 - **`System.IO` works in Playground** but is **blocked in UMod plugins** — for plugins, bundle HTML files in the mod and load via `ModHost.Assets.Load<TextAsset>()`
 - **`HttpListener` requires Windows admin** on some port ranges — use ports 1024+ to avoid permission issues
-- **Always add CORS headers** (`Access-Control-Allow-Origin: *`) or the dashboard page can't connect to `ws://localhost:19053`
+- **Always add CORS headers** (`Access-Control-Allow-Origin: *`) or the dashboard page can't call `http://localhost:19052`
+- **0.15.x: `new WebSocket('ws://localhost:19053')` with no subprotocol is rejected** when API security is on. The browser reports it as a generic connection failure with no reason — if a dashboard that used to work now won't connect, this is why
+- **The 19053/19052 token rotates every launch** — never bake it into a page or a preset; read it from `Player.log` each session
+- **Port 19190 has no auth and binds to `0.0.0.0`** — it is LAN-reachable. Validate every message; don't expose privileged actions there
+- **A browser page cannot use a 19190 mod channel** — the `Channel` routing key is a handshake *header*, and the browser `WebSocket` API cannot set headers. Use a native/Node/Python client, or Tier 2
 - **`EventBus.Unsubscribe<WebSocketRawMessageEvent>(_wsSub)`** — the type arg must be explicit; the compiler cannot infer `T` from `Guid`
 - **`_listener.GetContext()`** is blocking — always wrap in `UniTask.RunOnThreadPool()` to avoid freezing Unity
 - **Vuplex ScreenAsset blocks `file:///` and some `http://` URLs** — for embedded display, serve via Tier 2 HTTP server

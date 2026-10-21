@@ -2,6 +2,12 @@
 
 Code-only Warudo plugins can be built and packaged without Unity using `dotnet` + `pack.py`.
 
+**Still valid on Warudo 0.15.2** (verified against a 0.15.2 install). Nothing here needed changing
+for the 0.14.4 uMod 2.9.0 → 2.9.9 upgrade — see *Version fields* below for why. Note that this
+path bypasses the Unity-side uMod compile-time security verifier, so blocked API calls are caught
+only at **load** time: check `Player.log` if an Asset or Node fails to appear.
+See [warudo-0.15.md](warudo-0.15.md) for the current restriction list.
+
 ## Toolchain
 
 - **Compiler:** `dotnet build` (.NET SDK) targeting `netstandard2.0`
@@ -62,9 +68,9 @@ timestamp:     int64 LE  (Windows FILETIME)
 int32:         3
 int32:         4
 int32:         3
-VarString:     umod_version     ("2.9.0")
-VarString:     unity_version    ("2021.3.45f2")
-VarString:     sdk_version      ("0.14.3")
+VarString:     umod_version     ("2.9.0")      ← declared minimum, see below
+VarString:     unity_version    ("2021.3.45f2") ← must equal the host EXACTLY
+VarString:     sdk_version      ("0.14.3")      ← recorded, never validated
 VarString:     plugin_name
 VarString:     plugin_version
 VarString:     description
@@ -73,6 +79,25 @@ bytes:         b'\x00\x00'
 ```
 
 VarString = C# `BinaryWriter.Write(string)` = 7-bit VarInt length + UTF-8 bytes.
+
+### Version fields — which ones the loader actually checks
+
+From `UMod.dll`'s load path:
+
+```csharp
+ModVersion.Parse(info.ModCoreVersion).IsSameVersionOrLower(new UModVersion())  // must hold
+Application.unityVersion != info.ModUnityVersion                               // must be false
+// ModToolsVersion: read into the struct, never compared
+```
+
+- **`umod_version` is a floor, not a match.** It must be ≤ the host's uMod. Warudo 0.15.2 ships
+  uMod 2.9.9, so the baked-in `"2.9.0"` passes — and because it is the *lower* bound, keeping it at
+  `2.9.0` is what makes one bundle load on both old and new Warudo. **Do not raise it to 2.9.9**;
+  that would break the bundle on Warudo < 0.14.5 for no gain.
+- **`unity_version` must match the host exactly.** This is the field that breaks on a Warudo
+  update — bump it only when Warudo's Unity version actually changes. Check it with:
+  `(Get-Item "$WarudoDir\Warudo.exe").VersionInfo.ProductVersion`. Still `2021.3.45f2` on 0.15.2.
+- **`sdk_version` is cosmetic.** Nothing reads it back, so a stale `"0.14.3"` is harmless.
 
 ### assemblymodules.dat format
 ```

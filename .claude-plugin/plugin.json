@@ -1,11 +1,18 @@
 {
   "name": "warudo-plugin-skill",
-  "version": "1.0.0",
-  "description": "Warudo SDK reference, code templates, blueprint generation, and best practices for developing Warudo plugins",
+  "version": "1.1.0",
+  "description": "Warudo SDK reference, code templates, blueprint generation, no-Unity mod packaging, and Warudo 0.15.x API/port/security notes for developing Warudo plugins",
   "author": {
     "name": "esprite-VTOKU"
   },
   "repository": "https://github.com/esprite-VTOKU/warudo-plugin-skill",
   "license": "MIT",
-  "keywords": ["warudo", "vtuber", "unity", "plugin", "modding", "sdk"]
+  "keywords": [
+    "warudo",
+    "vtuber",
+    "unity",
+    "plugin",
+    "modding",
+    "sdk"
+  ]
 }
