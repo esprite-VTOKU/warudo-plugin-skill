@@ -10,18 +10,30 @@ See [warudo-0.15.md](warudo-0.15.md) for the current restriction list.
 
 ## Toolchain
 
-- **Compiler:** `dotnet build` targeting `netstandard2.0`
-- **Packager:** `f:/warudo-noUnity-builder/pack.py`
-- **References:** Warudo DLLs from `c:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\`
-- **Donor asset bundle:** `World2Screen.warudo` (minimal sharedassets.bin with just a Readme.txt)
+- **Compiler:** `dotnet build` (.NET SDK) targeting `netstandard2.0`
+- **Packager:** `mod-packager/pack.py` (bundled with this skill)
+- **References:** Warudo DLLs from your install's `Warudo_Data/Managed/` folder. The
+  default Steam path is `C:\Program Files (x86)\Steam\steamapps\common\Warudo\Warudo_Data\Managed\` —
+  adjust the `<HintPath>`s in the `.csproj` if your install lives elsewhere.
+- **Donor asset bundle:** none needed — `pack.py` has a minimal `sharedassets.bin`
+  (just a Readme.txt) baked in as base64, so it is fully self-contained.
+
+Copy `mod-packager/template.csproj` and `mod-packager/HelloWorldPlugin.cs` from this
+skill as your starting point.
 
 ## Workflow
 
 ```bash
+# Set up a build folder anywhere, e.g.:
+#   warudo-build/
+#     MyPlugin.csproj   (from mod-packager/template.csproj — rename AssemblyName)
+#     pack.py           (from mod-packager/pack.py)
+#     src/*.cs          (your plugin source)
+
 # 1. Write C# source in src/*.cs
 # 2. Build DLL
-cd f:/warudo-noUnity-builder
-dotnet build HelloWorld.csproj -o output/ -c Release
+cd warudo-build
+dotnet build MyPlugin.csproj -o output/ -c Release
 
 # 3. Pack into .warudo  (no --id flag: the id comes from [PluginType] in the DLL)
 python pack.py <PluginName> output/<Name>.dll \
@@ -111,7 +123,7 @@ PE header fields at: `dll[e_lfanew + 0x18 + offset]`:
 
 ## Files
 
-All tooling lives in the skill folder: `c:/Users/chaes/.claude/skills/warudo/mod-packager/`
+All tooling is bundled with this skill under `mod-packager/`:
 
 - `pack.py` — the packager
 - `template.csproj` — dotnet project template

@@ -9,36 +9,37 @@ A Claude Code skill that provides full Warudo SDK reference, code templates, blu
 - **Graph API** — C# blueprint generation from plugin code, built-in node ports, iFacialMocap animation pattern
 - **Blueprint JSON generation** *(experimental)* — generate raw `.json` blueprints to import directly into Warudo, with node lookup from the live node catalog, addon plugin detection, and layout conventions. Test generated blueprints in Warudo before relying on them.
 - **Warudo 0.15.x notes** — uMod/SDK compatibility, the new per-launch API auth token, the 19052 / 19053 / 19190 port map, Warudo Link (`warudo://`) managed callbacks, mod-to-mod interoperability, and the current restriction list
-- **No-Unity mod packaging** — build a code-only plugin with `dotnet` and pack it straight into a `.warudo` bundle (`mod-packager/pack.py`), no Unity Editor needed
+- **Build plugins without Unity** — `dotnet build` + a bundled `pack.py` produce a `.warudo` bundle directly from C#, no Unity Editor or SDK project required (code-only plugins: assets, nodes, HTTP/UDP servers)
 - **Web dashboard integration** — WebSocket control protocol, plugin-hosted HTTP server, embedded ScreenAsset
+- **Node catalog** — bundled catalog of 969 unique Warudo nodes for blueprint generation and node lookup
 - **Gotchas** — lessons learned and common pitfalls from plugin development
 
 ## Installation
 
-### As a project skill (recommended)
+### As a plugin (recommended)
 
-Copy the `skills/warudo/` folder into your project's `.claude/skills/` directory:
+In Claude Code, add this repo as a marketplace and install:
 
 ```
-your-warudo-project/
-  .claude/
-    skills/
-      warudo/
-        SKILL.md
-        sdk-reference.md
-        templates.md
-        graph-api.md
-        gotchas.md
-        blueprint-json.md
-        warudo-0.15.md
-        web-dashboard.md
-        mod-packaging.md
-        mod-packager/
+/plugin marketplace add esprite-VTOKU/warudo-plugin-skill
+/plugin install warudo-plugin-skill@warudo-plugin-skill
 ```
 
-### As a personal skill
+The `/warudo` skill then auto-loads in any project.
 
-Copy to `~/.claude/skills/warudo/` to make it available across all your projects.
+### As a personal skill (manual)
+
+Clone the repo and copy the skill into your user skills folder:
+
+```bash
+git clone https://github.com/esprite-VTOKU/warudo-plugin-skill
+cp -r warudo-plugin-skill/skills/warudo ~/.claude/skills/warudo
+```
+
+### As a project skill
+
+Or copy `skills/warudo/` into a single project's `.claude/skills/` directory so it's
+scoped to that project.
 
 ## Usage
 
@@ -61,19 +62,20 @@ Or just start asking Warudo plugin development questions — the skill auto-trig
 | `blueprint-json.md` | ~150 | *(experimental)* Raw blueprint JSON schema, node catalog lookup, plugin detection |
 | `warudo-0.15.md` | ~280 | Warudo 0.15.x: version/uMod compatibility, API auth token, port map, Warudo Link, mod interoperability, restriction list, launch flags |
 | `web-dashboard.md` | ~660 | WebSocket protocol, plugin-hosted HTTP server, ScreenAsset, dashboard templates |
-| `mod-packaging.md` | ~110 | `.warudo` bundle format; build + pack a code-only mod without Unity |
-| `mod-packager/` | — | `pack.py` packager, `template.csproj`, working HelloWorld plugin |
+| `mod-packaging.md` | ~140 | Build & pack a `.warudo` without Unity; referencing extra Managed DLLs; DOTween transitions |
+| `mod-packager/` | — | Bundled tooling: `pack.py` packager, `template.csproj`, `HelloWorldPlugin.cs` example |
+| `node-catalog.json` | ~45k | Bundled catalog of 969 unique Warudo nodes |
 | `gotchas.md` | ~130 | Common pitfalls and lessons learned |
 
-Only `SKILL.md` loads by default. Supporting files are loaded on-demand when needed.
+Only `SKILL.md` loads by default. Supporting files are loaded on-demand when needed. `node-catalog.json` is referenced during blueprint generation for node lookup.
 
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) CLI
-- A Unity project with the [Warudo Mod Tool SDK](https://github.com/HakuyaLabs/Warudo-Mod-Tool) —
+- For **code-only plugins** (assets, nodes, servers): just the [.NET SDK](https://dotnet.microsoft.com/download) and a Warudo install — build with `dotnet` + `pack.py`, no Unity needed (see `mod-packaging.md`).
+- For plugins that ship **Unity assets** (prefabs, meshes, textures, animations): a Unity project with the [Warudo Mod Tool SDK](https://github.com/HakuyaLabs/Warudo-Mod-Tool) —
   reference it as `https://github.com/HakuyaLabs/Warudo-Mod-Tool.git#upm/latest` in
   `Packages/manifest.json` (`#upm/<version>` to pin)
-- …or, for a code-only plugin, just the .NET SDK and Python 3 — see `mod-packaging.md`
 
 Written against **Warudo 0.15.2** (Unity 2021.3.45f2, uMod 2.9.9).
 
